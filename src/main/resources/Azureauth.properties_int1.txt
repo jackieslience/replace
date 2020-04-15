@@ -1,0 +1,9 @@
+#test
+subscription=a16fa6b3-7d24-4227-898c-5e7c518f985a
+client=da646573-3887-4cc8-a85f-15e6196d70b5
+key=jQ7k_ZnJgY0sVoWbLSAufPE3@9d:hWF-
+tenant=7f756bb1-f9b4-4ff3-be32-1457b18c5f24
+managementURI=https://management.core.chinacloudapi.cn/
+baseURL=https://management.chinacloudapi.cn/
+authURL=https://login.chinacloudapi.cn/
+graphURL=https://graph.chinacloudapi.cn/
