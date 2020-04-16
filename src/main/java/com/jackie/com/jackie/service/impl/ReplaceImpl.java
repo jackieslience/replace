@@ -50,7 +50,7 @@ public class ReplaceImpl implements ReplaceService {
         } else {
             return "env";
         }
-        String path = "azureauth.properties_"+environment+".txt";
+        String path = "/wise/bmw-migration/config/azureauth.properties_"+environment+".txt";
         File credFile = new File(path);
         if (TYPE_APPSETTING.equals(type)) {
             return replaceAppsetting(groupName, serviceName, json, credFile);
