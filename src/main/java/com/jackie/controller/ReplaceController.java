@@ -13,7 +13,7 @@ public class ReplaceController {
     @Autowired
     private ReplaceService replaceService;
 
-    @PostMapping(value = "/replace")
+    @PostMapping(value = "/replaceConfig")
     public Boolean replace(@RequestBody ReplaceEntity replaceEntity) {
         return replaceService.replaceConfig(replaceEntity);
     }

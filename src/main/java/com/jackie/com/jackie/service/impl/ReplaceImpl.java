@@ -100,6 +100,6 @@ public class ReplaceImpl implements ReplaceService {
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
-        return null;
+        return true;
     }
 }
