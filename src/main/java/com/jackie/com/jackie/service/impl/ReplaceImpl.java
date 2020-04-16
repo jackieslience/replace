@@ -9,11 +9,14 @@ import com.microsoft.azure.management.appservice.AppSetting;
 import com.microsoft.azure.management.appservice.ConnectionStringType;
 import com.microsoft.azure.management.appservice.WebApp;
 import com.microsoft.rest.LogLevel;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 
@@ -47,15 +50,8 @@ public class ReplaceImpl implements ReplaceService {
         } else {
             return "env";
         }
-//        String path = "classpath:Azureauth.properties_"+environment+".txt";
-//        File credFile = null;
-//        try {
-//            credFile = ResourceUtils.getFile(path);
-//        } catch (FileNotFoundException e) {
-//            e.printStackTrace();
-//        }
-
-        File credFile = new File(Class.class.getClass().getResource("/").getPath() +"Azureauth.properties_"+environment+".txt");
+        String path = "azureauth.properties_"+environment+".txt";
+        File credFile = new File(path);
         if (TYPE_APPSETTING.equals(type)) {
             return replaceAppsetting(groupName, serviceName, json, credFile);
         } else if (TYPE_DB.equals(type)) {
