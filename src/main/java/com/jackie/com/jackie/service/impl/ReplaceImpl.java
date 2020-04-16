@@ -30,7 +30,7 @@ public class ReplaceImpl implements ReplaceService {
     private static final String TYPE_DB = "db";
 
     @Override
-    public Boolean replaceConfig(ReplaceEntity replaceEntity) {
+    public String replaceConfig(ReplaceEntity replaceEntity) {
         String env = replaceEntity.getEnv();
         String groupName = replaceEntity.getGroupName();
         String serviceName = replaceEntity.getServiceName();
@@ -45,26 +45,28 @@ public class ReplaceImpl implements ReplaceService {
         } else if (PROD.equals(env)) {
             environment = PROD;
         } else {
-            return true;
+            return "env";
         }
-        String path = "classpath:Azureauth.properties_"+environment+".txt";
-        File credFile = null;
-        try {
-            credFile = ResourceUtils.getFile(path);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
+//        String path = "classpath:Azureauth.properties_"+environment+".txt";
+//        File credFile = null;
+//        try {
+//            credFile = ResourceUtils.getFile(path);
+//        } catch (FileNotFoundException e) {
+//            e.printStackTrace();
+//        }
+
+        File credFile = new File(Class.class.getClass().getResource("/").getPath() +"Azureauth.properties_"+environment+".txt");
         if (TYPE_APPSETTING.equals(type)) {
             return replaceAppsetting(groupName, serviceName, json, credFile);
         } else if (TYPE_DB.equals(type)) {
             return replaceDB(groupName, serviceName, json, credFile);
         } else {
-            return true;
+            return "type";
         }
 
     }
 
-    private Boolean replaceAppsetting(String groupName, String serviceName, String json, File credFile) {
+    private String replaceAppsetting(String groupName, String serviceName, String json, File credFile) {
         try {
             Azure azure = Azure.configure()
                     .withLogLevel(LogLevel.BASIC)
@@ -85,11 +87,11 @@ public class ReplaceImpl implements ReplaceService {
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
-        return true;
+        return "success";
 
     }
 
-    private Boolean replaceDB(String groupName, String serviceName, String json, File credFile) {
+    private String replaceDB(String groupName, String serviceName, String json, File credFile) {
         try {
             Azure azure = Azure.configure()
                     .withLogLevel(LogLevel.BASIC)
@@ -108,6 +110,6 @@ public class ReplaceImpl implements ReplaceService {
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
-        return true;
+        return "success";
     }
 }

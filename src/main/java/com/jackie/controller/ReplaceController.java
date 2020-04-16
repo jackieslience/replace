@@ -14,7 +14,7 @@ public class ReplaceController {
     private ReplaceService replaceService;
 
     @PostMapping(value = "/replaceConfig")
-    public Boolean replace(@RequestBody ReplaceEntity replaceEntity) {
+    public String replace(@RequestBody ReplaceEntity replaceEntity) {
         return replaceService.replaceConfig(replaceEntity);
     }
 }

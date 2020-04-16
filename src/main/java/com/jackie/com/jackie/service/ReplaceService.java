@@ -7,5 +7,5 @@ import com.jackie.com.jackie.entity.ReplaceEntity;
  */
 public interface ReplaceService {
 
-    Boolean replaceConfig(ReplaceEntity replaceEntity);
+    String replaceConfig(ReplaceEntity replaceEntity);
 }
