@@ -1,7 +1,8 @@
-subscription=c06e76a4-c22b-456a-9026-cd0e802daad1
-client=84adccdf-8c52-4919-b7f1-1d2e4df18a01
-key=AY3cbO7_q7WAvroA5hhx@dD@atVTnO_j
-tenant=2cbcf857-5096-4909-a7a9-37fcc567abab
+#test
+subscription=a16fa6b3-7d24-4227-898c-5e7c518f985a
+client=da646573-3887-4cc8-a85f-15e6196d70b5
+key=jQ7k_ZnJgY0sVoWbLSAufPE3@9d:hWF-
+tenant=7f756bb1-f9b4-4ff3-be32-1457b18c5f24
 managementURI=https://management.core.chinacloudapi.cn/
 baseURL=https://management.chinacloudapi.cn/
 authURL=https://login.chinacloudapi.cn/
