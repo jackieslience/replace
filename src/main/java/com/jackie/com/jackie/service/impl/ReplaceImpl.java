@@ -2,6 +2,7 @@ package com.jackie.com.jackie.service.impl;
 
 
 import com.alibaba.fastjson.JSONObject;
+import com.jackie.com.jackie.entity.DevConfig;
 import com.jackie.com.jackie.entity.IntConfig;
 import com.jackie.com.jackie.entity.ProdConfig;
 import com.jackie.com.jackie.entity.ReplaceEntity;
@@ -32,6 +33,9 @@ public class ReplaceImpl implements ReplaceService {
 
     @Autowired
     private ProdConfig prodConfig;
+
+    @Autowired
+    private DevConfig devConfig;
 
     @Override
     public String replaceConfig(ReplaceEntity replaceEntity) {
@@ -66,7 +70,6 @@ public class ReplaceImpl implements ReplaceService {
                     .authenticate(credFile)
                     .withDefaultSubscription();
             WebApp app = azure.webApps().getByResourceGroup(groupName, serviceName);
-            Map<String, AppSetting> appSettings = app.getAppSettings();
             List<Map<String, String>> list = (List<Map<String, String>>) JSONObject.parse(json);
             list.forEach(temp -> {
                 Map<String, String> map = temp;
@@ -106,7 +109,6 @@ public class ReplaceImpl implements ReplaceService {
 
     private File readProperties(String env) throws IOException {
         File temp = File.createTempFile("tempfile", ".txt");
-//        temp.deleteOnExit();
         PrintStream ps = new PrintStream(new FileOutputStream(temp));
         if (INT.equals(env)) {
             ps.println("subscription="+intConfig.getSubscription());
@@ -128,7 +130,17 @@ public class ReplaceImpl implements ReplaceService {
             ps.println("authURL="+prodConfig.getAuthURL());
             ps.println("graphURL="+prodConfig.getGraphURL());
             ps.close();
-        } else {
+        } else if(DEV.equals(env)){
+            ps.println("subscription="+devConfig.getSubscription());
+            ps.println("client="+devConfig.getClient());
+            ps.println("key="+devConfig.getKey());
+            ps.println("tenant="+devConfig.getTenant());
+            ps.println("managementURI="+devConfig.getManagementURI());
+            ps.println("baseURL="+devConfig.getBaseURL());
+            ps.println("authURL="+devConfig.getAuthURL());
+            ps.println("graphURL="+devConfig.getGraphURL());
+            ps.close();
+        }else{
             return null;
         }
 
