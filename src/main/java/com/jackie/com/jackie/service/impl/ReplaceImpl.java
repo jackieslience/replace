@@ -2,6 +2,8 @@ package com.jackie.com.jackie.service.impl;
 
 
 import com.alibaba.fastjson.JSONObject;
+import com.jackie.com.jackie.entity.IntConfig;
+import com.jackie.com.jackie.entity.ProdConfig;
 import com.jackie.com.jackie.entity.ReplaceEntity;
 import com.jackie.com.jackie.service.ReplaceService;
 import com.microsoft.azure.management.Azure;
@@ -9,14 +11,10 @@ import com.microsoft.azure.management.appservice.AppSetting;
 import com.microsoft.azure.management.appservice.ConnectionStringType;
 import com.microsoft.azure.management.appservice.WebApp;
 import com.microsoft.rest.LogLevel;
-import org.springframework.core.io.ClassPathResource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.util.ResourceUtils;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.List;
 import java.util.Map;
 
@@ -26,11 +24,14 @@ public class ReplaceImpl implements ReplaceService {
     private static final String DEV = "dev";
     private static final String INT = "int";
     private static final String PROD = "prod";
-    private static final String ENV_DEV = "AZURE_AUTH_LOCATION_DEV";
-    private static final String ENV_INT = "AZURE_AUTH_LOCATION_INT";
-    private static final String ENV_PROD = "AZURE_AUTH_LOCATION_PROD";
     private static final String TYPE_APPSETTING = "appsetting";
     private static final String TYPE_DB = "db";
+
+    @Autowired
+    private IntConfig intConfig;
+
+    @Autowired
+    private ProdConfig prodConfig;
 
     @Override
     public String replaceConfig(ReplaceEntity replaceEntity) {
@@ -40,29 +41,25 @@ public class ReplaceImpl implements ReplaceService {
         String type = replaceEntity.getType();
         String json = replaceEntity.getJson();
         String model = replaceEntity.getModel();
-        String environment = null;
-        if (DEV.equals(env)) {
-            environment = DEV;
-        } else if (INT.equals(env)) {
-            environment = INT;
-        } else if (PROD.equals(env)) {
-            environment = PROD;
-        } else {
-            return "env";
-        }
-        String path = "/wise/bmw-migration/config/azureauth.properties_"+environment+".txt";
-        File credFile = new File(path);
-        if (TYPE_APPSETTING.equals(type)) {
-            return replaceAppsetting(groupName, serviceName, json, credFile);
-        } else if (TYPE_DB.equals(type)) {
-            return replaceDB(groupName, serviceName, json, credFile);
-        } else {
-            return "type";
-        }
 
+        try {
+            File credFile = readProperties(env);
+            if(credFile==null)return "not found file";
+            if (TYPE_APPSETTING.equals(type)) {
+                replaceAppsetting(groupName, serviceName, json, credFile);
+            } else if (TYPE_DB.equals(type)) {
+                replaceDB(groupName, serviceName, json, credFile);
+            } else {
+                return "type invalid";
+            }
+            credFile.delete();
+            return "success";
+        } catch (IOException e) {
+            return "IOException";
+        }
     }
 
-    private String replaceAppsetting(String groupName, String serviceName, String json, File credFile) {
+    private void replaceAppsetting(String groupName, String serviceName, String json, File credFile) {
         try {
             Azure azure = Azure.configure()
                     .withLogLevel(LogLevel.BASIC)
@@ -83,11 +80,10 @@ public class ReplaceImpl implements ReplaceService {
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
-        return "success";
 
     }
 
-    private String replaceDB(String groupName, String serviceName, String json, File credFile) {
+    private void replaceDB(String groupName, String serviceName, String json, File credFile) {
         try {
             Azure azure = Azure.configure()
                     .withLogLevel(LogLevel.BASIC)
@@ -99,13 +95,43 @@ public class ReplaceImpl implements ReplaceService {
                 Map<String, String> map = temp;
                 if (map.containsKey("name") && map.containsKey("value")) {
                     app.update()
-                            .withConnectionString(map.get("name"), map.get("value"),ConnectionStringType.fromString(map.get("type")))
+                            .withConnectionString(map.get("name"), map.get("value"), ConnectionStringType.fromString(map.get("type")))
                             .apply();
                 }
             });
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
-        return "success";
+    }
+
+    private File readProperties(String env) throws IOException {
+        File temp = File.createTempFile("tempfile", ".txt");
+//        temp.deleteOnExit();
+        PrintStream ps = new PrintStream(new FileOutputStream(temp));
+        if (INT.equals(env)) {
+            ps.println("subscription="+intConfig.getSubscription());
+            ps.println("client="+intConfig.getClient());
+            ps.println("key="+intConfig.getKey());
+            ps.println("tenant="+intConfig.getTenant());
+            ps.println("managementURI="+intConfig.getManagementURI());
+            ps.println("baseURL="+intConfig.getBaseURL());
+            ps.println("authURL="+intConfig.getAuthURL());
+            ps.println("graphURL="+intConfig.getGraphURL());
+            ps.close();
+        } else if (PROD.equals(env)) {
+            ps.println("subscription="+prodConfig.getSubscription());
+            ps.println("client="+prodConfig.getClient());
+            ps.println("key="+prodConfig.getKey());
+            ps.println("tenant="+prodConfig.getTenant());
+            ps.println("managementURI="+prodConfig.getManagementURI());
+            ps.println("baseURL="+prodConfig.getBaseURL());
+            ps.println("authURL="+prodConfig.getAuthURL());
+            ps.println("graphURL="+prodConfig.getGraphURL());
+            ps.close();
+        } else {
+            return null;
+        }
+
+        return temp;
     }
 }
