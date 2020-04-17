@@ -11,11 +11,13 @@ import com.microsoft.azure.management.Azure;
 import com.microsoft.azure.management.appservice.AppSetting;
 import com.microsoft.azure.management.appservice.ConnectionStringType;
 import com.microsoft.azure.management.appservice.WebApp;
+import com.microsoft.azure.management.appservice.WebAppBase;
 import com.microsoft.rest.LogLevel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -71,15 +73,13 @@ public class ReplaceImpl implements ReplaceService {
                     .withDefaultSubscription();
             WebApp app = azure.webApps().getByResourceGroup(groupName, serviceName);
             List<Map<String, String>> list = (List<Map<String, String>>) JSONObject.parse(json);
+            HashMap<String, String> map = new HashMap<>();
             list.forEach(temp -> {
-                Map<String, String> map = temp;
-                if (map.containsKey("name") && map.containsKey("value")) {
-                    app.update()
-                            .withAppSetting(map.get("name"), map.get("value"))
-                            .apply();
-                }
+                map.put(temp.get("name"),temp.get("value"));
             });
-
+            app.update()
+                    .withAppSettings(map)
+                    .apply();
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
