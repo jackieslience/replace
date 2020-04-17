@@ -94,14 +94,14 @@ public class ReplaceImpl implements ReplaceService {
                     .withDefaultSubscription();
             WebApp app = azure.webApps().getByResourceGroup(groupName, serviceName);
             List<Map<String, String>> list = (List<Map<String, String>>) JSONObject.parse(json);
+            WebApp.Update update = app.update();
             list.forEach(temp -> {
                 Map<String, String> map = temp;
                 if (map.containsKey("name") && map.containsKey("value")) {
-                    app.update()
-                            .withConnectionString(map.get("name"), map.get("value"), ConnectionStringType.fromString(map.get("type")))
-                            .apply();
+                    update.withConnectionString(map.get("name"), map.get("value"), ConnectionStringType.fromString(map.get("type")));
                 }
             });
+            update.apply();
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
