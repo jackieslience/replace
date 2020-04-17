@@ -1,14 +1,14 @@
 package com.jackie.com.jackie.service.impl;
 
-
 import com.alibaba.fastjson.JSONObject;
 import com.jackie.com.jackie.entity.DevConfig;
 import com.jackie.com.jackie.entity.IntConfig;
 import com.jackie.com.jackie.entity.ProdConfig;
-import com.jackie.com.jackie.entity.ReplaceEntity;
-import com.jackie.com.jackie.service.ReplaceService;
+import com.jackie.com.jackie.entity.Result;
+import com.jackie.com.jackie.service.ConfigService;
 import com.microsoft.azure.management.Azure;
-import com.microsoft.azure.management.appservice.ConnectionStringType;
+import com.microsoft.azure.management.appservice.AppSetting;
+import com.microsoft.azure.management.appservice.ConnectionString;
 import com.microsoft.azure.management.appservice.WebApp;
 import com.microsoft.rest.LogLevel;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,18 +19,15 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Service
-public class ReplaceImpl implements ReplaceService {
+public class ConfigImpl implements ConfigService {
 
     private static final String DEV = "dev";
     private static final String INT = "int";
     private static final String PROD = "prod";
-    private static final String TYPE_APPSETTING = "appsetting";
-    private static final String TYPE_DB = "db";
-
     @Autowired
     private IntConfig intConfig;
 
@@ -39,73 +36,40 @@ public class ReplaceImpl implements ReplaceService {
 
     @Autowired
     private DevConfig devConfig;
-
     @Override
-    public String replaceConfig(ReplaceEntity replaceEntity) {
-        String env = replaceEntity.getEnv();
-        String groupName = replaceEntity.getGroupName();
-        String serviceName = replaceEntity.getServiceName();
-        String type = replaceEntity.getType();
-        String json = replaceEntity.getJson();
-        String model = replaceEntity.getModel();
-
+    public Result get(String env, String groupName, String serviceName) {
+        Result result = new Result();
         try {
             File credFile = readProperties(env);
-            if(credFile==null)return "not found file";
-            if (TYPE_APPSETTING.equals(type)) {
-                replaceAppsetting(groupName, serviceName, json, credFile);
-            } else if (TYPE_DB.equals(type)) {
-                replaceDB(groupName, serviceName, json, credFile);
-            } else {
-                return "type invalid";
+            if(credFile==null)return result;
+            Azure azure = Azure.configure()
+                    .withLogLevel(LogLevel.BASIC)
+                    .authenticate(credFile)
+                    .withDefaultSubscription();
+            WebApp app = azure.webApps().getByResourceGroup(groupName, serviceName);
+            Map<String, AppSetting> appSettings = app.getAppSettings();
+            Map<String, ConnectionString> connectionStrings = app.getConnectionStrings();
+            HashMap<String,String> appSettingsMap = new HashMap<>();
+            appSettings.forEach((k,v)->{
+                appSettingsMap.put(v.key(),v.value());
+            });
+            HashMap<String,String> connectionStringsMap = new HashMap<>();
+            connectionStrings.forEach((k,v)->{
+                connectionStringsMap.put(v.name(),v.value());
+            });
+            Object appSettingsJson = JSONObject.toJSON(appSettingsMap);
+            Object connectionStringsJson = JSONObject.toJSON(connectionStringsMap);
+            if(Objects.nonNull(appSettingsJson)){
+                result.setAppSettingsJson(appSettingsJson.toString());
+            }
+            if(Objects.nonNull(connectionStringsJson)){
+                result.setConnectionStringsJson(connectionStringsJson.toString());
             }
             credFile.delete();
-            return "success";
         } catch (IOException e) {
-            return "IOException";
+            e.printStackTrace();
         }
-    }
-
-    private void replaceAppsetting(String groupName, String serviceName, String json, File credFile) {
-        try {
-            Azure azure = Azure.configure()
-                    .withLogLevel(LogLevel.BASIC)
-                    .authenticate(credFile)
-                    .withDefaultSubscription();
-            WebApp app = azure.webApps().getByResourceGroup(groupName, serviceName);
-            List<Map<String, String>> list = (List<Map<String, String>>) JSONObject.parse(json);
-            HashMap<String, String> map = new HashMap<>();
-            list.forEach(temp -> {
-                map.put(temp.get("name"),temp.get("value"));
-            });
-            app.update()
-                    .withAppSettings(map)
-                    .apply();
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-        }
-
-    }
-
-    private void replaceDB(String groupName, String serviceName, String json, File credFile) {
-        try {
-            Azure azure = Azure.configure()
-                    .withLogLevel(LogLevel.BASIC)
-                    .authenticate(credFile)
-                    .withDefaultSubscription();
-            WebApp app = azure.webApps().getByResourceGroup(groupName, serviceName);
-            List<Map<String, String>> list = (List<Map<String, String>>) JSONObject.parse(json);
-            WebApp.Update update = app.update();
-            list.forEach(temp -> {
-                Map<String, String> map = temp;
-                if (map.containsKey("name") && map.containsKey("value")) {
-                    update.withConnectionString(map.get("name"), map.get("value"), ConnectionStringType.fromString(map.get("type")));
-                }
-            });
-            update.apply();
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-        }
+        return result;
     }
 
     private File readProperties(String env) throws IOException {
