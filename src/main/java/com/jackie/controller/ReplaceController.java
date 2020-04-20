@@ -27,4 +27,11 @@ public class ReplaceController {
     public String replace(@RequestBody ReplaceEntity replaceEntity) {
         return replaceService.replaceConfig(replaceEntity);
     }
+
+    @GetMapping(value = "aaa")
+    public String sdads(){
+return "a";
+    }
+
+
 }
