@@ -18,7 +18,7 @@ public class ReplaceController {
     @Autowired
     private ConfigService configService;
 
-    @GetMapping(value = "/config")
+    @PostMapping(value = "/config")
     public Result replace(@RequestBody ConfigEntity configEntity) {
         return configService.get(configEntity.getEnv(),configEntity.getGroupName(),configEntity.getServiceName());
     }
